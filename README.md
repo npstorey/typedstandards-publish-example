@@ -1,569 +1,284 @@
-# typedstandards-host-template
+# typedstandards-publish-example
 
-A GitHub template repository for serving signed [Typed Standards](https://typedstandards.org)
-records from GitHub Pages under your own `did:key`. Copy it with "Use this template",
-and replace the example record with your own. A copy runs in one of two modes:
+A worked example of publishing signed [Typed Standards](https://typedstandards.org) records
+from a notebook. A hosted Google Colab notebook and a local Marimo app each sign their own
+file, and publish it with one call to the Python package
+[`typedstandards`](https://pypi.org/project/typedstandards/0.2.0/) 0.2.0. The records are
+served at `https://publish-example.typedstandards.org`.
 
-- **Branch mode**, the default, and this template's own. You sign in your terminal,
-  run `build`, and commit what Pages serves, under `docs/`. On every push, `check.yml`
-  checks that the committed `docs/` is what
-  [`@typedstandards/host-core`](https://www.npmjs.com/package/@typedstandards/host-core)
-  builds, and that every record verifies.
-- **Publish mode.** You commit only the signed record and its entry in `host.json`,
-  for example from a notebook. On every push to `main`, `publish.yml` builds the site
-  in the job, verifies every record, and deploys Pages from the job. See
-  [Publishing from a notebook](#publishing-from-a-notebook).
-
-[![Verify this record with Typed Standards](https://typedstandards.org/badge/typed-standards-verify.svg)](<https://typedstandards.org/verify?url=https%3A%2F%2Fhost-template.typedstandards.org%2Fbundles%2Ffirst-note.bundle.json>)
-
-- **What it pins.** `@typedstandards/host-core` 0.1.1, exactly, and
-  [`@typedstandards/cli`](https://www.npmjs.com/package/@typedstandards/cli) 0.2.0,
-  exactly, for signing. `package-lock.json` resolves both from the npm registry.
-- **What it serves.** One example record: `records/first-note.md`, a short Markdown
-  note signed under `raw-bytes/v1`.
-- **What it holds.** No key. Signing runs in your own terminal or notebook. Neither
-  workflow signs: each builds, checks and verifies, and reads no repository secret.
+This repository was made from
+[`typedstandards-host-template`](https://github.com/npstorey/typedstandards-host-template)
+and set up in its publish mode, by the template README's
+[Publishing from a notebook](https://github.com/npstorey/typedstandards-host-template#publishing-from-a-notebook),
+steps 1 to 9. Each publish is one commit to `main`. The template's `publish.yml` then builds
+the site from `host.json` and `records/`, verifies every record, and deploys it to GitHub
+Pages. The wrapper's README, at its 0.2.0 release,
+[Publishing to a GitHub Pages host](https://github.com/npstorey/typedstandards-python/blob/bdcf377040c462d9648554879f1ee976e4be6524/README.md#publishing-to-a-github-pages-host),
+describes `publish`, its names, its refusals and its receipt.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `host.json` | The host manifest: the origin, the visibility, the registry and the records. host-core reads it. |
-| `records/` | What you sign and what signing printed: the note, the input to `sign`, and `sign`'s output. Kept out of `docs/`. |
-| `host-policy.json` | The display policy: which records a page shows, and as what. |
-| `docs/` | Branch mode: what Pages serves. `bundles/`, `.well-known/typed-publisher.json` and `records.json` are `typedstandards-host build`'s output. `.nojekyll`, `CNAME` and `index.html` are written by hand; `CNAME` names this template's domain. Publish mode keeps only `index.html` and `.nojekyll`, which the job copies into the site it builds. |
-| `verify-output.txt` | Branch mode's golden: `typedstandards-host verify`'s output on `docs/`. Publish mode has none; each run's summary carries `verify`'s output. |
-| `display.mjs` | Reads every record an index lists (`docs/records.json`, or the path given as its argument) through `host-policy.json` with host-core's `displayOf`, and exits 1 when one is refused. |
-| `.github/workflows/check.yml` | Branch mode's workflow. |
-| `.github/workflows/publish.yml` | Publish mode's workflow. |
-| `.gitleaks.toml` | Tells [gitleaks](https://github.com/gitleaks/gitleaks) that an Ed25519 `did:key` identifier is a public key, not a secret. Without it, gitleaks reads every `did:key` in the signed and served files as an API key. |
+| `notebooks/colab-example.ipynb` | The Colab notebook. Committed with no outputs. Cell 0 is the verifier badge for `colab-example`. |
+| `notebooks/marimo_example.py` | The Marimo app. Its second cell is the badge for `marimo-example`. |
+| `scripts/scan_outputs.py` | The output scanner. |
+| `scripts/rehearse.py` | The offline rehearsal of the four publishes. |
+| `host.json`, `host-policy.json`, `records/` | The host's inputs. Each publish adds a record. |
+| `docs/index.html`, `docs/.nojekyll` | Copied into the site by `publish.yml`. |
+| `display.mjs`, `.github/workflows/` | The template's, unchanged. |
 
-## What the workflows check
+## The four records
 
-A repository variable, `TYPEDSTANDARDS_HOST_MODE`, picks which workflow's jobs run:
-`publish.yml`'s when it is `publish`, `check.yml`'s otherwise, unset included
-([why a variable](#the-mode-switch-a-repository-variable)).
+| # | What | Made by | Name |
+|---|---|---|---|
+| 1 | A record of the notebook | `colab-example.ipynb`, `RUN = "first"` | `colab-example` |
+| 2 | A record of the app's source | `marimo_example.py` | `marimo-example` |
+| 3 | A record of the notebook's rerun, with a `revises` node from 1 to 3 | `colab-example.ipynb`, `RUN = "rerun"` | `colab-example-rerun` |
+| 4 | A withdrawal of 1, with its reason | the same rerun, after 3 | on `colab-example` |
 
-### Branch mode: `check.yml`
+Each name was chosen before signing. The badge is part of the signed bytes and links to the
+record's bundle URL, so the name has to be known before signing. `badge_cell` refuses a URL
+that holds a date, a time or a 64-hex string, so the wrapper's default name
+(`<stem>/<date>-<eight hex>`) cannot be badged. A rerun published under its first run's
+name would be listed as `colab-example-<eight hex of its own hash>`, which its badge cannot
+name either. So the rerun has a name of its own, and `publish` puts the `revises` node on the
+entry of the record the node targets.
 
-On every push and pull request, on Node 24:
-
-1. `npm ci` installs the exact versions `package-lock.json` pins.
-2. `npx typedstandards-host check` rebuilds `docs/` in memory from `host.json` and
-   `records/`, and compares it with the committed `docs/` byte for byte.
-3. `npx typedstandards-host verify` verifies every served record offline, with the
-   network blocked, and its output must equal `verify-output.txt`.
-4. `node display.mjs` reads every record through `host-policy.json`, and none may be
-   refused.
-
-### Publish mode: `publish.yml`
-
-On every push to `main`, and on demand, on Node 24:
-
-1. `npm ci` installs the exact versions `package-lock.json` pins.
-2. `npx typedstandards-host build --out "$RUNNER_TEMP/site"` builds the served tree
-   from `host.json` and `records/`, beside copies of `docs/index.html` and
-   `docs/.nojekyll`.
-3. `npx typedstandards-host verify` verifies every record in that tree offline, with the
-   network blocked. Its output goes to the run summary, and a failure stops the job.
-4. `node display.mjs "$RUNNER_TEMP/site/records.json"` reads every record in the built
-   index through `host-policy.json`, and none may be refused.
-5. `actions/upload-pages-artifact` uploads the tree with `include-hidden-files: true`.
-   With its default, `false`, the action's `tar` adds `--exclude=.[^/]*`, and
-   `.well-known/typed-publisher.json` is left out.
-6. `actions/deploy-pages` deploys it. Only this job holds `pages: write` and
-   `id-token: write`; the workflow's default is `contents: read`.
-
-A failed step deploys nothing, and the site stays as it was.
-
-**Why Node 24, and not an exact version.** The workflow pins the major version, 24.
-The first line of `verify`'s output names no Node version and no core version:
-
-```
-typedstandards-host verify: records.json lists 1 record, each verified offline by @typedstandards/verify-core with the network blocked
-```
-
-so the golden stays equal across Node 24 patches. `verify-output.txt` was written on
-Node 24.21.0. A change of Node major, or of host-core version, is a reason to
-[regenerate the golden](#regenerate-the-golden) and review its diff.
+The rerun reads the first record's `envelopeHash` from the served `records.json` (its
+`packageHash`). `publish` checks that hash against the repository's `main` before writing.
 
 ## What the records prove
 
-This describes what `typedstandards-host verify` checks offline, over the served
-bundles (`verify-output.txt`).
+`publish.yml` runs `typedstandards-host verify` over every record. For what that verifies
+(the bytes, the signature, the key, the carried withdrawal, and what is only the host's
+statement), see the template README's
+[What the records prove](https://github.com/npstorey/typedstandards-host-template#what-the-records-prove).
+For each record here:
 
-- **Attested:** checkable by anyone from the served bundle. The row names the check.
-- **Asserted:** stated inside the signed bytes, resting on the signer's word. No check establishes it.
-- **Host's statement:** served by the host, unsigned. A verifier reads it, and it shows
-  what the host says, not who holds the key.
-- **Not covered:** nothing in this repository addresses it.
+- **`colab-example`.**
+  - *Proves:* the signed `.ipynb` has not changed since this example's key signed it: every
+    cell's source, and the outputs of the cells above the signing cell.
+  - *Does not prove:*
+    - that those outputs came from running that source. The outputs are what Colab's frontend
+      returned, and a signer can change them before signing;
+    - that it ran on Colab, or when. `createdAt` is the signer's own claim;
+    - that the analysis is correct;
+    - who holds the key. The signer is a pseudonymous `did:key`.
+  - The signed file is the notebook in the form the signing cell writes (below). It is not
+    byte-equal to any `.ipynb` that Colab saves.
+- **`marimo-example`.**
+  - *Proves:* the app's source file has not changed since it was signed. The record carries
+    its bytes, and `shasum -a 256 notebooks/marimo_example.py` gives the record's
+    `contentHash` while the file is unchanged.
+  - *Does not prove:* any output, because a Marimo file holds none; that the app ran; or
+    which commit of this repository held the file.
+- **`colab-example-rerun`.**
+  - *Proves and does not prove:* as `colab-example`.
+  - The `revises` node, carried on `colab-example`'s entry, is a signed statement by the same
+    key that the rerun revises the first run. It never changes `colab-example`'s status. It
+    does not prove that the rerun corrects anything.
+- **The withdrawal of `colab-example`.**
+  - *Proves:* the key's holder signed a withdrawal of `colab-example` with this reason:
+    "Replaced by a rerun of the same notebook, published as colab-example-rerun."
+    `records.json` lists the record as `withdrawn` with the reason, and the record still
+    verifies.
+  - *Does not prove:* that the reason is true. A host could also leave a withdrawal out, and
+    the record's own signature cannot show that it was not withdrawn (the template README).
 
-| Property | Status | Why |
-|---|---|---|
-| The bytes of the signed file | Attested (#3, #4, #1) | The record carries the file's exact UTF-8 bytes inline, under `raw-bytes/v1` (#3). #4 recomputes `contentHash.sha256` from those bytes, and #1 recomputes the envelope hash. The digest is the file's ordinary SHA-256, so `shasum -a 256 records/first-note.md` checks it without any Typed Standards code. |
-| The signature over the record | Attested (#2) | Ed25519ph over the envelope-hash hex string. |
-| The identifier is the key's | Attested (#14, #6) | #14 reads `key_derived_match`: the `did:key` identifier is derived from the public key that signed. #6 reads `ok`: the signature's `kid` equals `metadata.signingKeyId`. |
-| Whether a record is withdrawn | Attested (#10), for what the bundle carries | A withdrawal is a signed attestation carried in the unsigned bundle. `verify` checks each one's signature and signer, and that the status they give equals the one `records.json` states. A host could leave a withdrawal out, and the record's own signature cannot show that it was not withdrawn. |
-| The served files are what host-core builds | Checked by `check`, not by a verifier | `check` rebuilds `docs/` from `host.json` and `records/` and compares byte for byte. The bundle's view fields that are not copied from the package (the title, the visibility, `trustRegistryUrl` and the registry copy) are the host's. `verify` checks that every copied field equals the package's. |
-| The key is active | Host's statement | `.well-known/typed-publisher.json` lists the key as active from the first record's `createdAt`. `verify` reads it as the file a verifier fetches from `trustRegistryUrl`, and #5 reads `active`. That shows which host publishes the statement, not who holds the key. The registry is this template's own statement about its example key. It is not a Typed Standards record, and not an endorsement by the Typed Standards specification or by typedstandards.org, although this host is a subdomain of it. |
-| Who holds the key | Not covered | The signer is a pseudonymous `did:key`. Its `displayName` names this template, not a person. The example record's key was generated for its one signature and deleted after it. |
-| Revocation of the key | Not covered | A `did:key` has no rotation. host-core 0.1.1 serves the key as active, and `host.json` has no field to mark it revoked. Anyone who holds a leaked seed can sign as the identifier. |
-| Capture method and producer profile | Asserted (#15) | #15 reads `ok`: `script-run` is a value the `scripted-recomputation` profile allows. The label is signed, so changing it breaks #1, but no check establishes it. |
-| The display policy | Host's statement | `host-policy.json` is this host's rule for what a page shows. It is not signed, and no verifier reads it. |
-| When the record existed | Not covered | #7 does not apply: no RFC 3161 token was requested. `createdAt` is the signer's own claim. |
-| Inclusion in a transparency log | Not covered | #8 does not apply: no transparency-log entry was submitted. |
-| That any statement in the file is correct | Not covered | A signature shows the bytes are unchanged since signing, not that they are true. |
+## How the notebook signs its own bytes
 
-A bundle carries no `lifecycle` summary in host-core 0.1.1. A record's status is in
-`records.json`, in the display policy's reading, and in the verifier's own reading of
-the carried attestations.
+Colab's kernel holds no file of the notebook. Cell 3 (counting the badge as cell 0; it starts
+`# This notebook's own bytes`) asks Colab's frontend for it with
+`google.colab._message.blocking_request("get_ipynb", ...)`. This request is internal and
+undocumented. In colabtools' source
+([`_message.py`](https://github.com/googlecolab/colabtools/blob/f4b1d17310779e2f312fd7c06e5084ec80deb9f1/google/colab/_message.py),
+at `f4b1d17`), `blocking_request` sends a request of any type to the frontend. It returns the
+reply's `data`, returns `None` on a timeout, and raises `MessageError` on an error reply.
+Nothing in colabtools names `get_ipynb`: Colab's frontend answers it, and the frontend's
+source is not public.
 
-## The served URLs
+The notebook takes the reply's `ipynb` value as the notebook. Cell 3 makes the request before
+any secret is read. It stops the run if the reply is not an nbformat 4 notebook with the
+parameters, analysis and signing cells. The signing cell asks again. It stops if the reply
+does not set this run's `RUN`, or holds no output for the analysis.
 
-Pages serves `docs/` from `main`, at the custom domain `docs/CNAME` names, over
-HTTPS. With `origin` set as in `host.json`:
+What is signed is the notebook rebuilt from the reply:
 
-| URL | What |
-|---|---|
-| `https://host-template.typedstandards.org/` | `docs/index.html` |
-| `https://host-template.typedstandards.org/bundles/first-note.bundle.json` | The example record's bundle |
-| `https://host-template.typedstandards.org/records.json` | The index, version 1 |
-| `https://host-template.typedstandards.org/.well-known/typed-publisher.json` | The key registry, the bundle's `trustRegistryUrl` |
+- every cell keeps its type and its source;
+- code cells above the signing cell keep their outputs and execution counts, and the signing
+  cell and every later cell keep neither;
+- every cell's metadata is dropped. Of the notebook's metadata, only `kernelspec` and
+  `language_info` are kept. Colab's cell metadata can name the account that ran each cell;
+- the badge in cell 0 is replaced by this run's, written by `badge_cell` before signing;
+- the file is written as nbformat 4.4 JSON with one-space indentation and sorted keys.
 
-The verifier link for the example record:
+**The fallback**, if cell 3 stops:
 
+1. Run the cells down to the analysis.
+2. Use File, Download, Download `.ipynb`.
+3. Upload that file in the Files pane, which puts it under `/content/`.
+4. Set `NOTEBOOK_FILE = "/content/<its name>.ipynb"` in the parameters cell, and run from
+   the parameters cell on.
+
+The signed notebook is then the downloaded file, rebuilt as above, and its parameters cell
+reads `NOTEBOOK_FILE = None`. Set `RUN` before you download.
+
+## The seed and the token
+
+The seed is the base64 of 32 random bytes: this example's signing key. It was made once,
+outside any notebook, and is kept in 1Password. The token is a fine-grained personal access
+token for this repository alone, with Contents read and write
+([the template README, step 6](https://github.com/npstorey/typedstandards-host-template#steps)).
+
+**Do not:**
+
+- paste the seed into a cell, print it (with `print`, `%env`, or a cell whose last expression
+  is its value), or save it in the `.ipynb` in any other way. The notebook is the file that
+  is signed and published;
+- make the seed a GitHub Actions variable or secret. Nothing in this repository's workflows
+  signs, and a workflow that could read the seed could sign as this key;
+- generate a seed in a notebook and keep it nowhere else. A record signed by a lost key can
+  never be withdrawn or revised.
+
+The token follows the same rules. It is read from `TYPEDSTANDARDS_GITHUB_TOKEN`, and never
+written as a literal in a cell.
+
+### Custody in Colab
+
+The notebook reads both values from Colab's Secrets panel (the key icon in the left bar), in
+one cell that prints nothing. That cell runs after the analysis and just before the signing
+cell:
+
+```python
+os.environ["TYPEDSTANDARDS_SIGNING_SEED_B64"] = userdata.get("TYPEDSTANDARDS_SIGNING_SEED_B64")
+os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_TOKEN")
 ```
-https://typedstandards.org/verify?url=https%3A%2F%2Fhost-template.typedstandards.org%2Fbundles%2Ffirst-note.bundle.json
-```
 
-### Serve it over HTTPS
+- **What colabtools' source establishes.** In
+  [`userdata.py`](https://github.com/googlecolab/colabtools/blob/f4b1d17310779e2f312fd7c06e5084ec80deb9f1/google/colab/userdata.py),
+  at `f4b1d17`, `userdata.get` asks Colab's frontend for the value through
+  `_message.blocking_request("GetSecret", ...)`, and returns the reply's `payload`. The reply
+  says whether the secret exists (`SecretNotFoundError` if not), and whether this notebook
+  has access to it (`NotebookAccessError` if not). With no Colab UI to answer, as when the
+  notebook runs outside it, the request times out (`TimeoutException`: "Secrets can only be
+  fetched when running from the Colab UI"). So the kernel gets a value only by asking the
+  frontend while the notebook runs, and only for a notebook with access.
+- **What this repository shows.** The notebook writes neither value into any cell. The
+  secrets cell assigns both to `os.environ` and prints nothing, and no other cell's code reads
+  them back; the CLI reads the seed, and `publish` the token, from the environment. The
+  signed notebook is rebuilt with every cell's metadata and the notebook's Colab metadata
+  dropped. `scripts/scan_outputs.py` checks every output cell of the committed notebook and of
+  each signed notebook for both variables' names and the token's prefix.
+- **Not measured here.** What Colab itself saves into its own copy of the notebook, in Drive.
+- **What the source does not establish.** Where Google stores the value, and for how long.
+- **The panel.** Observed on 2026-10-09: two secrets added in one notebook's Secrets panel,
+  with that notebook's access off, were listed in the panel of a second, new notebook. Each
+  notebook reads a value only with its own access to that secret on: `userdata.get` raises
+  `NotebookAccessError` otherwise (`userdata.py`, above).
+- **The choice.** Choosing Colab is choosing that Google holds the seed and the token for as
+  long as the secrets exist in the panel, not only while the kernel runs. While the runtime
+  runs, the values are also in its environment, which every later cell and every process it
+  starts can read. After a run, use Runtime, Disconnect and delete runtime. When the example
+  is done, delete both secrets from the panel. The seed stays in 1Password.
 
-The browser verifier runs on an HTTPS page, so it can fetch the bundle and the
-registry only over HTTPS: a browser blocks an `http` fetch, or a redirect to `http`,
-from an HTTPS page. In the repository's Pages settings, set the custom domain and
-turn on **Enforce HTTPS**. Once Pages has deployed, check that `origin` answers over
-HTTPS without a redirect:
+Locally, the Marimo app gets both values from `op run`. Its env file maps each variable to a
+1Password reference, and no value is in the file. Each mapping is one unquoted line:
 
 ```sh
-curl -sI "https://host-template.typedstandards.org/records.json"   # expect HTTP 200, and no location header
+TYPEDSTANDARDS_SIGNING_SEED_B64=op://<vault>/<item>/<field>
+TYPEDSTANDARDS_GITHUB_TOKEN=op://<vault>/<item>/<field>
 ```
 
-### A site with a path prefix
+## Running each step
 
-This template's site has its own domain, so `origin` has no path. A copy served as
-a project site with no custom domain is served under a path,
-`https://<owner>.github.io/<repository>/`. `origin` then carries that path, with no
-trailing `/`, and host-core puts every served URL under it, the registry included:
-`<origin>/.well-known/typed-publisher.json`. A verifier finds the registry by the
-URL each bundle names in `trustRegistryUrl`, not at the host's root.
+The setup (template README, steps 1 to 9) is done. This repository's step 5 is the commit
+"Set up this copy for publish mode". Its own `publish` run fails at `build` with
+`records must be a non-empty array`, as step 5 says, until the first publish. Run the
+publishes in this order. After each one, watch its run with
+`gh run list --workflow publish.yml --repo npstorey/typedstandards-publish-example --limit 5`,
+then open the printed `verify_url`.
 
-If the account's user site (`<owner>.github.io`) has a custom domain, GitHub serves
-the account's project sites under that domain instead, and the `github.io` URL
-redirects there, possibly over `http`. Set `origin` to the URL Pages actually serves
-over HTTPS, and check it with the `curl` above.
+1. **The notebook's first run: `colab-example`.**
+   1. Open
+      `https://colab.research.google.com/github/npstorey/typedstandards-publish-example/blob/main/notebooks/colab-example.ipynb`.
+   2. In the Secrets panel, add `TYPEDSTANDARDS_SIGNING_SEED_B64` and
+      `TYPEDSTANDARDS_GITHUB_TOKEN`, with values copied from 1Password. Turn on this
+      notebook's access to both.
+   3. Leave `RUN = "first"`, and use Runtime, Run all. Colab asks before running a notebook
+      it did not write; run it anyway.
 
-### Cross-origin reads
-
-The browser verifier at typedstandards.org fetches the bundle and the registry from
-another origin, so it needs the host to send `Access-Control-Allow-Origin`. On
-2026-09-29, with `Origin: https://typedstandards.org`, this template's site answered
-`HTTP/2 200` with `access-control-allow-origin: *` for four paths: the bundle, the
-registry, `records.json` and `/`. The same day, the verifier at typedstandards.org,
-given the bundle's URL, read "Verified", with the key active in the registry it
-fetched. That is what was checked; a copy checks its own site once Pages has
-deployed it:
-
-```sh
-curl -sI -H 'Origin: https://typedstandards.org' \
-  "<origin>/bundles/<name>.bundle.json" \
-  | grep -i '^access-control-allow-origin'
-```
-
-`docs/.nojekyll` stops Pages running Jekyll, which would leave `.well-known/` out of
-the site.
-
-## The badge snippet
-
-`npx typedstandards-host links` prints each record's verifier link and badge
-snippets, in the site's own percent-encoded form. The example record's HTML:
-
-```html
-<a href="https://typedstandards.org/verify?url=https%3A%2F%2Fhost-template.typedstandards.org%2Fbundles%2Ffirst-note.bundle.json">
-  <img src="https://typedstandards.org/badge/typed-standards-verify.svg" alt="Verify this record with Typed Standards" width="248" height="30" />
-</a>
-```
-
-and its Markdown:
-
-```md
-[![Verify this record with Typed Standards](https://typedstandards.org/badge/typed-standards-verify.svg)](<https://typedstandards.org/verify?url=https%3A%2F%2Fhost-template.typedstandards.org%2Fbundles%2Ffirst-note.bundle.json>)
-```
-
-The badge is a call to verify, not a verdict. `docs/index.html` links to the
-verifier with text and shows no badge image, because the image is served by another
-host and the page loads nothing from any other host.
-
-## What a copy changes
-
-These are branch mode's steps. Publish mode's are in
-[Publishing from a notebook](#publishing-from-a-notebook).
-
-1. **`docs/CNAME`, before you enable Pages.** Delete it, or replace its one line with
-   your own domain. It names this template's domain, and GitHub Pages reads it as
-   the site's custom domain, so a copy that keeps it would try to claim this
-   template's domain instead of serving yours.
-2. **`origin`** in `host.json`: the URL your Pages site is served at over HTTPS (see
-   [a site with a path prefix](#a-site-with-a-path-prefix)). The registry's and the
-   index's `$comment` strings are yours too: the registry's says whose statement it
-   is.
-3. **The record.** Remove the example record and sign your own (below). `build`
-   deletes nothing, so the example's bundle is removed by hand; `check` reports a
-   served bundle that `host.json` no longer lists.
-4. **The policy.** `signer` in `host-policy.json` becomes your `did:key`, and the
-   rules name your records' statuses and roles.
-5. **`docs/index.html`**, by hand, and the URLs and badge in this README.
-6. **The golden**, `verify-output.txt`, [regenerated](#regenerate-the-golden).
-7. **Pages**, in the repository's settings: deploy from a branch, `main`, `/docs`;
-   your custom domain, if any; and Enforce HTTPS.
-
-## Sign your first record
-
-In a copy of this template in branch mode, on Node 24. The commands run from the repository's root.
-
-```sh
-npm ci
-```
-
-### 1. Make a key, and keep it out of the repository
-
-The CLI reads the signing seed from one environment variable,
-`TYPEDSTANDARDS_SIGNING_SEED_B64`: the base64 of 32 random bytes. It never prints the
-seed and never writes it. Keep the seed in a secret store, as the
-[CLI's README](https://www.npmjs.com/package/@typedstandards/cli) shows with
-`op run`. At the least, keep it in a file only you can read, outside every
-repository:
-
-```sh
-export KEY_FILE="$HOME/.typedstandards/signing-seed.b64"
-mkdir -p "$(dirname "$KEY_FILE")"
-test -e "$KEY_FILE" || ( umask 077 && openssl rand -base64 32 > "$KEY_FILE" )
-```
-
-Never commit the seed, print it, or add it to this repository's secrets: the
-workflow signs nothing. The seed is the only way to sign, or withdraw, under your
-`did:key`, so keep a backup. A `did:key` cannot be rotated.
-
-### 2. Replace the example record
-
-```sh
-git rm -q docs/CNAME   # or write your own domain into it
-git rm -q records/first-note.md records/first-note.signed.json docs/bundles/first-note.bundle.json
-git mv records/first-note.input.json records/my-record.input.json
-printf '# My record\n\nThe text I am signing.\n' > records/my-record.md
-```
-
-Edit `records/my-record.input.json`: set `signer.displayName` to the name you sign
-under, and `prompt` to what the record is. The input is produce-core's envelope
-input, which the [CLI's README](https://www.npmjs.com/package/@typedstandards/cli)
-describes under `sign`.
-
-### 3. Sign
-
-```sh
-TYPEDSTANDARDS_SIGNING_SEED_B64="$(cat "$KEY_FILE")" npx typedstandards sign \
-  --input records/my-record.input.json --output-file records/my-record.md \
-  > records/my-record.signed.json
-```
-
-`sign` verifies its own result offline before it prints. The file's bytes are signed
-inline under `raw-bytes/v1`, so the file must be UTF-8.
-
-### 4. Point `host.json` and the policy at your record
-
-In `host.json`, set `origin`, and replace the example's entry in `records`:
-
-```json
-{ "name": "my-record", "signed": "records/my-record.signed.json", "attestations": [], "title": "My record", "extensions": { "role": "note" } }
-```
-
-In `host-policy.json`, set `signer` to your `did:key`, which this prints:
-
-```sh
-node -p 'require("./records/my-record.signed.json").package.signer.identifier'
-```
-
-### 5. Build, check, verify, and print the links
-
-```sh
-npx typedstandards-host build
-npx typedstandards-host check
-npx typedstandards-host verify > verify-output.txt
-node display.mjs
-npx typedstandards-host links
-```
-
-`build` writes `docs/`. `check` compares it with a fresh build. `verify` writes the
-new golden; review it with `git diff verify-output.txt`. `links` prints the verifier
-link and badge snippets for this README and `docs/index.html`. Commit, push, and the
-workflow runs the same checks.
-
-### 6. Withdraw a record
-
-A signed record cannot be changed. A correction is a withdrawal plus a new record.
-The withdrawal is signed with the same key:
-
-```sh
-node -e '
-const s = require("./records/my-record.signed.json");
-const input = { targetNodeId: s.envelopeHash, reason: "Replaced by a corrected record.", signer: { bindingTier: s.package.signer.bindingTier, displayName: s.package.signer.displayName } };
-require("node:fs").writeFileSync("records/my-record.withdraw-input.json", JSON.stringify(input, null, 2) + "\n");
-'
-TYPEDSTANDARDS_SIGNING_SEED_B64="$(cat "$KEY_FILE")" npx typedstandards withdraw \
-  --input records/my-record.withdraw-input.json > records/my-record.withdrawal.json
-```
-
-Add it to the record's `attestations` in `host.json`:
-
-```json
-"attestations": ["records/my-record.withdrawal.json"]
-```
-
-and run step 5 again. The record still verifies, `records.json` lists it as
-`withdrawn` with the reason, and the policy's `withdrawn` rule displays it.
-
-## Publishing from a notebook
-
-In publish mode the repository holds only inputs: the signed records under `records/`,
-their entries in `host.json`, the policy, and `docs/index.html`. A notebook publishes a
-record by committing its signed file and its `host.json` entry to `main` in one
-commit, with the Python package [`typedstandards`](https://pypi.org/project/typedstandards/);
-its README describes the call. Each push to `main` then runs `publish.yml`, which
-builds, verifies and deploys the whole site
-([what it runs](#publish-mode-publishyml)). The measurements behind these steps were
-made on a public repository.
-
-### The mode switch: a repository variable
-
-| Mode | `TYPEDSTANDARDS_HOST_MODE` | The job that runs | Pages source | What is served |
-|---|---|---|---|---|
-| Branch mode | unset, or anything but `publish` | `check.yml`'s | Deploy from a branch: `main`, `/docs` | The committed `docs/` |
-| Publish mode | `publish` | `publish.yml`'s | GitHub Actions | `build` over the pushed commit, made in the job |
-
-Each job reads the variable in its own `if:` line:
-
-```yaml
-# .github/workflows/check.yml, job check
-    if: vars.TYPEDSTANDARDS_HOST_MODE != 'publish'
-# .github/workflows/publish.yml, jobs build and deploy
-    if: vars.TYPEDSTANDARDS_HOST_MODE == 'publish'
-```
-
-Why a variable, and not deleting the other mode's workflow: both workflows start on
-a push to `main`. This template is itself a branch-mode site, so it has to carry
-`publish.yml` without running it: its own site is served from `main`, `/docs`, not
-deployed from a job. Deleting a file cannot do that, and a variable can.
-A copy made from the template gets both files and no variable, so it starts in
-branch mode, as copies made before publish mode do. One setting switches a copy
-either way, with no commit. In each mode the other workflow still starts on a push,
-and its job is skipped.
-
-### Steps
-
-1. **Make the repository.** "Use this template", public.
-2. **Turn on Pages from Actions, and set the mode.** In the repository's settings:
-   Pages, Build and deployment, Source: **GitHub Actions**. Then Secrets and
-   variables, Actions, Variables: a repository variable `TYPEDSTANDARDS_HOST_MODE`
-   with the value `publish`. With the GitHub CLI:
+   The publish cell prints the receipt's `name`, `commit`, `bundle_url`, `verify_url`,
+   `registry_url` and `written`, and whether the badge in cell 0 links to `verify_url`.
+2. **The Marimo app: `marimo-example`.** From this repository's root, with Node 20.19 or
+   later on `PATH`, run `op signin` first, then:
 
    ```sh
-   gh variable set TYPEDSTANDARDS_HOST_MODE --body publish --repo <account>/<repository>
+   op run --env-file="$HOME/.typedstandards/publish-example.env" -- \
+     uv run --no-project --with typedstandards==0.2.0 --with marimo==0.25.1 \
+     python notebooks/marimo_example.py --publish
    ```
 
-   From here `check.yml`'s job is skipped and `publish.yml`'s jobs run.
-3. **Pick the address, with one `curl`** on the account address, once step 2 is
-   done, reading the first hop only:
+   This signs the file as committed. Without `--publish`, the app signs nothing. Under
+   `marimo run notebooks/marimo_example.py`, it has a button that does the same; the
+   rehearsal below runs the script form only.
+3. **The rerun and the withdrawal: `colab-example-rerun`, then `colab-example` withdrawn.**
+   Wait until the first run's `publish` run has deployed: the rerun reads the served
+   `records.json`. In the notebook, set `RUN = "rerun"`, and use Runtime, Run all. The
+   publish cell signs a `revises` node and publishes the rerun. The withdrawal cell then
+   withdraws `colab-example`.
+4. **Check.** Run
+   `curl -sS https://publish-example.typedstandards.org/records.json | jq '.records[] | {name, status, withdrawn}'`.
+   It lists `colab-example` as `withdrawn` with its reason, and the other two as `active`.
+   Open each record's `verify_url`.
 
-   ```sh
-   curl -sS -o /dev/null -w 'first-hop: %{http_code} location=%{redirect_url}\n' \
-     "https://<account>.github.io/<repository>/"
-   ```
+**Running a step again.** A repeat of step 1 or 3 signs a new record under a name already
+listed. `publish` refuses it before any write (`PublishRefusedError`), and nothing changes.
+If step 3's withdrawal cell fails after the rerun was published, run only the secrets cell
+and the withdrawal cell. Run the withdrawal cell once: each run adds a withdrawal. To
+publish a further record, give it a new name in the parameters cell.
 
-   - **A `200`:** use the account address as it is (step 4a).
-   - **A redirect** (a `301` with a `location`): use a custom subdomain (step 4b).
-     An account whose own user site has a custom domain gets this: GitHub redirects
-     the account address to that domain, over `http`, on a response with no
-     `access-control-allow-origin`, as `first-hop: 301 location=http://<other-host>/<repository>/`.
-     A page on HTTPS cannot follow that.
+**A failed deploy.** See the template README's
+[When a deploy is stuck](https://github.com/npstorey/typedstandards-host-template#when-a-deploy-is-stuck).
 
-   A `404` with no `location` is not a redirect: read it as the first case, and run
-   the `curl` again once the first deploy is served. `origin` can change later,
-   because each run rebuilds every bundle from it. The `200` case rests on GitHub's
-   documentation; the account these steps were measured on got the redirect.
-4. **Set up the address.**
-   - **a. The account address.** `origin` in `host.json` is
-     `https://<account>.github.io/<repository>`, with no trailing `/`
-     ([a site with a path prefix](#a-site-with-a-path-prefix)).
-   - **b. A custom subdomain.** The general pattern is a subdomain of a domain you
-     own, for example `typedstandards.<your-site>`. At your DNS provider, add a
-     `CNAME` record from that name to `<account>.github.io.`. In the Pages settings,
-     set the custom domain to the same name, and turn on **Enforce HTTPS** once its
-     certificate is approved. `origin` is `https://<subdomain>`. A site deployed from
-     Actions ignores `docs/CNAME` (GitHub's documentation), so the domain lives in the
-     Pages settings only.
-
-     **When a certificate does not arrive.** On one site deployed from Actions, the
-     certificate stayed absent for about 34.5 hours. Changing the custom domain to
-     another name, one with no DNS record, and back again got it approved in under a
-     minute. Then read its state:
-
-     ```sh
-     gh api repos/<account>/<repository>/pages --jq .https_certificate.state   # expect approved
-     ```
-
-   GitHub Pages is the documented host, not the only one. Any static host will do
-   that serves `/records.json`, `/.well-known/typed-publisher.json` and each
-   `/bundles/<name>.bundle.json` under `origin`, over HTTPS with no redirect, with a
-   JSON content type and `access-control-allow-origin: *`. `publish.yml`'s upload and
-   deploy jobs are Pages-specific.
-5. **Change the copy for publish mode**, in one commit:
-
-   ```sh
-   git rm -q -r docs/bundles docs/.well-known docs/records.json docs/CNAME verify-output.txt
-   git rm -q records/first-note.md records/first-note.input.json records/first-note.signed.json
-   ```
-
-   - `docs/bundles/`, `docs/.well-known/` and `docs/records.json` are build output.
-     Publish mode builds them in the job, so committed copies would go stale and no
-     workflow would check them.
-   - `docs/CNAME` names this template's domain, and Actions ignores it.
-   - `verify-output.txt` is branch mode's golden. In publish mode it would change on
-     every publish, and each run's summary carries `verify`'s output instead.
-   - Keep `docs/index.html` and `docs/.nojekyll`: the job copies both into the site it
-     builds, and its `cp` fails without either. Edit `index.html` by hand: it names
-     this template's example record, and no build adds the records a notebook
-     publishes to it; `records.json` lists them. `.nojekyll` matters only in branch
-     mode, and keeping it lets the copy switch back.
-   - In `host.json`: set `origin` (step 4), and remove the example's entry from
-     `records`, leaving `"records": []`. Edit the registry's and the index's `$comment`
-     strings, which are yours.
-   - In `host-policy.json`: set `signer` to your `did:key`, the
-     `package.signer.identifier` of any record signed with your seed. The active rule
-     admits the roles `note` and `notebook`; name any other role your records carry.
-
-   host-core refuses a manifest with no records, so this commit's run fails at
-   `build` with `records must be a non-empty array`, and deploys nothing. The first
-   publish makes the first deploy.
-6. **Make the token.** A fine-grained personal access token: this one repository
-   only; repository permission **Contents: Read and write**, and nothing else
-   (GitHub adds Metadata: Read-only on its own). On a public repository the workflow
-   runs are readable with no token at all. A private repository was not measured:
-   what its token needs, and who can read its runs, are unknown. Keep the token in a
-   secret store, never in the repository or a notebook's saved output. With
-   1Password's CLI, run `op signin` in that terminal before `op run`, which otherwise
-   answers `You are not currently signed in`.
-7. **Add the ruleset.** On the default branch: block deletion and force pushes, with
-   no bypass actors, and nothing more:
-
-   ```sh
-   echo '{"name":"main","target":"branch","enforcement":"active","conditions":{"ref_name":{"include":["~DEFAULT_BRANCH"],"exclude":[]}},"rules":[{"type":"non_fast_forward"},{"type":"deletion"}]}' | gh api -X POST repos/<account>/<repository>/rulesets --input -
-   ```
-
-   No signed-commits rule: a commit made through the API with a fine-grained token is
-   unsigned, and the rule would refuse it. No pull-request rule: the notebook commits
-   to `main` directly. This ruleset lets the token's commit through.
-8. **Publish from the notebook**, as the
-   [`typedstandards` package's README](https://pypi.org/project/typedstandards/)
-   shows. The commit starts `publish.yml` within seconds; on the measured copy a new
-   record was served about 42 seconds after its commit.
-9. **See each run.** The repository's Actions tab lists `publish` runs; a run's
-   summary carries `verify`'s output, and a failed step's log says why. From a
-   terminal:
-
-   ```sh
-   gh run list --workflow publish.yml --repo <account>/<repository> --limit 5
-   curl -sS "https://api.github.com/repos/<account>/<repository>/actions/runs?head_sha=<commit>" \
-     | jq -r '.workflow_runs[] | "\(.name) \(.status) \(.conclusion) \(.html_url)"'
-   ```
-
-### When a deploy is stuck
-
-Every run builds the whole of `main`. A commit whose record fails `build` or
-`verify` (its row in the summary reads `FAIL`), or that `display.mjs` refuses, deploys
-nothing, and nor does any later commit while that record is on `main`: each later run
-fails at the same record. The site keeps serving the last good deploy.
-
-The remedy is a commit that removes the failing record: its file under `records/`
-and its entry in `host.json`, for example by reverting the commit that added it:
+## The scanner and the rehearsal
 
 ```sh
-git revert <commit>
-git push
+python3 scripts/scan_outputs.py [PATH ...]
 ```
 
-That record was never served, so removing it withdraws nothing. The next run deploys
-everything else on `main`.
-
-## The display policy, and a policy kept as YAML
-
-`host-policy.json` is JSON with `$comment` strings. host-core reads JSON only. A
-policy kept as YAML is converted first, with any YAML-to-JSON tool. With the
-[`yaml`](https://www.npmjs.com/package/yaml) package's command:
+The scanner searches every output of every cell. It reads every `.ipynb` git lists, every
+notebook signed inline in `records/*.signed.json`, and each path given. It looks for
+`TYPEDSTANDARDS_SIGNING_SEED_B64`, `TYPEDSTANDARDS_GITHUB_TOKEN` and the token prefix
+`github_pat_`. On a hit it exits 1 and names the file, the cell and the output, never the
+text. It exits 2 when an input cannot be read.
 
 ```sh
-npx --yes yaml@2.9.1 --json --single --strict --indent 2 < host-policy.yaml > host-policy.json
+fnm exec --using=24 -- uv run --no-project --with typedstandards==0.2.0 --with marimo==0.25.1 \
+  python scripts/rehearse.py
 ```
 
-This YAML converts, byte for byte, to the committed `host-policy.json`:
+The rehearsal runs the four publishes in the order above, offline, in a scratch copy of the
+committed tree:
 
-```yaml
-$comment: >-
-  The display policy: which records a page shows, and as what. It is this host's
-  own rule, not signed and not verified. Every rule names its statuses, so a status
-  no rule names is refused. A copy of the template changes signer to its own did:key.
-signer: did:key:z6Mks7BK2kyVhoPY3ayt6ALKeZY5eCbu64XyQuje9gTUxiUB
-type: content/analysis/v1
-display:
-  - $comment: An active note, or a record published from a notebook, is shown as current.
-    status: active
-    extensions:
-      role: [note, notebook]
-    as: current
-  - $comment: A withdrawn record stays listed, marked withdrawn.
-    status: withdrawn
-    as: withdrawn
-unmatched: refuse
-```
+- It uses a throwaway seed made in its own process, and the scratch copy's policy names that
+  key.
+- A fake GitHub API answers the reads and Git Data API writes that `publish` makes.
+- Colab is stood in for: `userdata.get`, and the `get_ipynb` reply with Colab-style metadata.
+  The Marimo app runs as a script.
+- After each commit, it runs `publish.yml`'s steps on Node 24 with the pinned host-core:
+  `build`, `verify` and `display.mjs`.
 
-A record's roles are host-specific, so they go under the record's `extensions` in
-`host.json`, and a rule names the values it admits. A record is displayed by the
-first rule it matches, and refused when its status is not `active`, `withdrawn` or
-`superseded`, when `signer` or `type` does not name it, or when no rule matches.
-`superseded` is displayed only when a rule names it.
+It fails unless:
 
-## Visibility is host-wide
+- every step exits 0;
+- `records.json` shows the withdrawal with its reason;
+- each badge links to its receipt's `verify_url`;
+- a repeat of either notebook run is refused before any write;
+- the scanner finds nothing;
+- neither the seed nor the token appears in any file, output or line it printed.
 
-`visibility` in `host.json` is every record's disclosure state: host-core 0.1.1 has
-no per-record visibility. It is never defaulted. Records that need different
-visibilities need separate hosts.
-
-## Regenerate the golden
-
-`verify-output.txt` is `typedstandards-host verify`'s output on `docs/`. After any
-change that alters it (a record added or withdrawn, a host-core upgrade, a new Node
-major), regenerate it and review the diff:
-
-```sh
-npx typedstandards-host build
-npx typedstandards-host check
-npx typedstandards-host verify > verify-output.txt
-git diff verify-output.txt
-```
-
-To upgrade host-core, pin the new version exactly, then regenerate:
-
-```sh
-npm install --save-exact @typedstandards/host-core@<version>
-```
+It needs `npm` and the npm registry for `npm ci`, and nothing else from the network.
 
 ## License
 

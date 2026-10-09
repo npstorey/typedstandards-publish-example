@@ -3,25 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>typedstandards-host-template</title>
+<title>typedstandards-publish-example</title>
 <style>
   body { font: 16px/1.5 system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
   code { font-size: 0.9em; }
 </style>
 </head>
 <body>
-<!-- Written by hand, not generated: host-core builds the files this page links to,
-     not the page. It loads nothing from any other host. -->
-<h1>typedstandards-host-template</h1>
-<p>This site serves signed Typed Standards records. Each record's bundle carries the
-signed package, and any verifier can check it.</p>
+<!-- Written by hand, not generated: the publish workflow builds the files this page links
+     to, not the page. It loads nothing from any other host. -->
+<h1>typedstandards-publish-example</h1>
+<p>This site serves signed Typed Standards records published from a hosted notebook and
+a local Marimo app, each with one call to the <code>typedstandards</code> Python package.
+Each record's bundle carries the signed package, and any verifier can check it.</p>
 
 <h2>Records</h2>
+<p>Each record's name was chosen before it was signed, so its verifier link is known in
+advance. A link answers 404 until its record is published.
+<a href="records.json">records.json</a> states each record's status, and a withdrawn
+record's reason.</p>
 <ul>
   <li>
-    <strong>A first signed note</strong> (active):
-    <a href="https://typedstandards.org/verify?url=https%3A%2F%2Fhost-template.typedstandards.org%2Fbundles%2Ffirst-note.bundle.json">verify this record</a>,
-    <a href="bundles/first-note.bundle.json">the bundle</a>
+    <code>colab-example</code>, the first run of the hosted notebook:
+    <a href="https://typedstandards.org/verify?url=https%3A%2F%2Fpublish-example.typedstandards.org%2Fbundles%2Fcolab-example.bundle.json">verify this record</a>,
+    <a href="bundles/colab-example.bundle.json">the bundle</a>
+  </li>
+  <li>
+    <code>marimo-example</code>, the local Marimo app:
+    <a href="https://typedstandards.org/verify?url=https%3A%2F%2Fpublish-example.typedstandards.org%2Fbundles%2Fmarimo-example.bundle.json">verify this record</a>,
+    <a href="bundles/marimo-example.bundle.json">the bundle</a>
+  </li>
+  <li>
+    <code>colab-example-rerun</code>, the notebook's rerun, which revises the first run:
+    <a href="https://typedstandards.org/verify?url=https%3A%2F%2Fpublish-example.typedstandards.org%2Fbundles%2Fcolab-example-rerun.bundle.json">verify this record</a>,
+    <a href="bundles/colab-example-rerun.bundle.json">the bundle</a>
   </li>
 </ul>
 
