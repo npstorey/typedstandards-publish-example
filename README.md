@@ -166,9 +166,10 @@ os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_
   frontend while the notebook runs, and only for a notebook with access. The value is not in
   the notebook file.
 - **What the source does not establish.** Where Google stores the value, and for how long.
-- **The panel.** It shows the same list of secrets in every notebook of the Google account.
-  Each notebook has its own access toggle for each secret, and reads a value only with that
-  toggle on.
+- **The panel.** Observed on 2026-10-09: two secrets added in one notebook's Secrets panel,
+  with that notebook's access off, were listed in the panel of a second, new notebook. Each
+  notebook reads a value only with its own access to that secret on: `userdata.get` raises
+  `NotebookAccessError` otherwise (`userdata.py`, above).
 - **The choice.** Choosing Colab is choosing that Google holds the seed and the token for as
   long as the secrets exist in the panel, not only while the kernel runs. While the runtime
   runs, the values are also in its environment, which every later cell and every process it
@@ -176,9 +177,7 @@ os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_
   is done, delete both secrets from the panel. The seed stays in 1Password.
 
 Locally, the Marimo app gets both values from `op run`. Its env file maps each variable to a
-1Password reference, and no value is in the file. Each mapping is one unquoted line; a
-quoted reference reaches the process with its quotes, and `publish` refuses a token that holds
-a quote:
+1Password reference, and no value is in the file. Each mapping is one unquoted line:
 
 ```sh
 TYPEDSTANDARDS_SIGNING_SEED_B64=op://<vault>/<item>/<field>
