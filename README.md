@@ -163,8 +163,14 @@ os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_
   has access to it (`NotebookAccessError` if not). With no Colab UI to answer, as when the
   notebook runs outside it, the request times out (`TimeoutException`: "Secrets can only be
   fetched when running from the Colab UI"). So the kernel gets a value only by asking the
-  frontend while the notebook runs, and only for a notebook with access. The value is not in
-  the notebook file.
+  frontend while the notebook runs, and only for a notebook with access.
+- **What this repository shows.** The notebook writes neither value into any cell. The
+  secrets cell assigns both to `os.environ` and prints nothing, and no other cell's code reads
+  them back; the CLI reads the seed, and `publish` the token, from the environment. The
+  signed notebook is rebuilt with every cell's metadata and the notebook's Colab metadata
+  dropped. `scripts/scan_outputs.py` checks every output cell of the committed notebook and of
+  each signed notebook for both variables' names and the token's prefix.
+- **Not measured here.** What Colab itself saves into its own copy of the notebook, in Drive.
 - **What the source does not establish.** Where Google stores the value, and for how long.
 - **The panel.** Observed on 2026-10-09: two secrets added in one notebook's Secrets panel,
   with that notebook's access off, were listed in the panel of a second, new notebook. Each
