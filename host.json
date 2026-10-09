@@ -17,6 +17,15 @@
       "extensions": {
         "role": "notebook"
       }
+    },
+    {
+      "name": "marimo-example",
+      "signed": "records/marimo-example.signed.json",
+      "attestations": [],
+      "title": "A local Marimo app's record of its own source",
+      "extensions": {
+        "role": "notebook"
+      }
     }
   ]
 }

@@ -1,0 +1,42 @@
+{
+  "package": {
+    "metadata": {
+      "schemaVersion": "0.1.0",
+      "packageId": "b00cae9f-b5ca-4926-9beb-1cb21efe68a1",
+      "createdAt": "2026-10-09T22:49:06.670Z",
+      "signingKeyId": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj",
+      "captureMethod": "script-run"
+    },
+    "producerProfile": "scripted-recomputation/publish-example",
+    "type": "content/analysis/v1",
+    "signer": {
+      "bindingTier": "pseudonymous",
+      "displayName": "typedstandards-publish-example",
+      "identifier": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+    },
+    "contentCanonicalization": "https://typedstandards.org/canonicalization/raw-bytes/v1",
+    "prompt": {
+      "hash": "51303123bce5953e84cc86fc5c1e66f0d8f5bf717ad379464bfe4b5f6bb21c31",
+      "visibility": "full_text",
+      "text": "Twelve values made by a fixed formula, and how many lie above their mean, computed in a local Marimo app."
+    },
+    "queries": [],
+    "dataSources": [],
+    "cost": {
+      "model": "none"
+    },
+    "skillMetadata": {},
+    "output": "import marimo\n\n__generated_with = \"0.25.1\"\napp = marimo.App()\n\n\n@app.cell\ndef _():\n    import marimo as mo\n\n    return (mo,)\n\n\n@app.cell\ndef _(mo):\n    mo.md(\n        \"\"\"[![Verify this record with Typed Standards](https://typedstandards.org/badge/typed-standards-verify.svg)](<https://typedstandards.org/verify?url=https%3A%2F%2Fpublish-example.typedstandards.org%2Fbundles%2Fmarimo-example.bundle.json>)\n\n    | Typed Standards record | |\n    |---|---|\n    | Host | `publish-example.typedstandards.org` |\n    | Capture method | `script-run` |\n\n    This cell is a reader affordance and is not authoritative: verification reads the signed record, not this cell, and the verifier shows the record's signer, hash and time.\n    \"\"\"\n    )\n    return\n\n\n@app.cell\ndef _(mo):\n    mo.md(\"\"\"\n    # A local Marimo app that publishes a record of its own source\n\n    The record is this file, `marimo_example.py`, signed inline with this example's key and\n    published to `https://publish-example.typedstandards.org` as `marimo-example`, with one call\n    to the [`typedstandards`](https://pypi.org/project/typedstandards/) package. The cell above is\n    the verifier badge for that record, written before signing.\n\n    Start it under `op run`, which sets `TYPEDSTANDARDS_SIGNING_SEED_B64` and\n    `TYPEDSTANDARDS_GITHUB_TOKEN` from 1Password for this process. The CLI reads the seed, and\n    `publish` the token, from that environment; no cell prints or stores either. The repository's\n    README gives the command.\n    \"\"\")\n    return\n\n\n@app.cell\ndef _(mo):\n    import statistics\n\n    values = [40 + (17 * k) % 23 for k in range(1, 13)]\n    mean = statistics.mean(values)\n    above = [v for v in values if v > mean]\n    mo.md(\n        f\"\"\"\n    Twelve values made by a fixed formula: `{values}`. Their mean is `{round(mean, 4)}`, and\n    `{len(above)}` of them lie above it. The analysis reads no file, no network and no credential.\n    \"\"\"\n    )\n    return\n\n\n@app.cell\ndef _(mo):\n    publish_button = mo.ui.run_button(label=\"Sign this file and publish it\")\n    publish_button\n    return (publish_button,)\n\n\n@app.cell\ndef _(mo, publish_button):\n    # Sign this file and publish it: on the button, or when the app was started with --publish.\n    from pathlib import Path\n\n    import typedstandards as ts\n\n    mo.stop(\n        not (publish_button.value or \"publish\" in mo.cli_args()),\n        mo.md(\"Not published: press the button, or start the app with `--publish`.\"),\n    )\n    _source = Path(mo.notebook_dir()) / \"marimo_example.py\"\n    _signed = ts.sign(\n        {\n            \"type\": \"content/analysis/v1\",\n            \"producerProfile\": \"scripted-recomputation/publish-example\",\n            \"captureMethod\": \"script-run\",\n            \"prompt\": \"Twelve values made by a fixed formula, and how many lie above their mean, computed in a local Marimo app.\",\n            \"promptVisibility\": \"full_text\",\n            \"queries\": [],\n            \"dataSources\": [],\n            \"cost\": {\"model\": \"none\"},\n            \"skillMetadata\": {},\n            \"trace\": {},\n            \"signer\": {\"bindingTier\": \"pseudonymous\", \"displayName\": \"typedstandards-publish-example\"},\n        },\n        output_file=_source,\n    )\n    receipt = ts.publish(\n        _signed,\n        host=ts.GitHubPagesHost(\"npstorey/typedstandards-publish-example\"),\n        name=\"marimo-example\",\n        title=\"A local Marimo app's record of its own source\",\n    )\n    for _key in (\"name\", \"commit\", \"bundle_url\", \"verify_url\", \"registry_url\", \"written\"):\n        print(f\"{_key}: {receipt[_key]}\")\n    print(\"the badge cell links to verify_url:\", f\"](<{receipt['verify_url']}>)\" in _signed[\"package\"][\"output\"])\n    return\n\n\nif __name__ == \"__main__\":\n    app.run()\n",
+    "trace": {},
+    "contentHash": {
+      "sha256": "593cb9a705ab632cfb09ee0b1dc9fe470cd38c16b7386aa82f62c1e029e8bc4e"
+    }
+  },
+  "envelopeHash": "4f4b1d673ae82aaef38685530500c650f1c633652c8beca2e90c566c95f3b7ce",
+  "signature": {
+    "signature": "NHQBB45YogpvjWHYz+MYg668ivWc+j7WqFfjabSEgsJWcwgxcKpS7Sahmhv5C7pW1MJ3rVynYhh26JjYd+vzCA==",
+    "publicKey": "MCowBQYDK2VwAyEARj4OGjTHMNQRCSRhuc8aQ0yveFtBf2RXaDW8ZOnlaz4=",
+    "algorithm": "Ed25519ph",
+    "kid": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+  }
+}
