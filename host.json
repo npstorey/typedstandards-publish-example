@@ -12,7 +12,9 @@
     {
       "name": "colab-example",
       "signed": "records/colab-example.signed.json",
-      "attestations": [],
+      "attestations": [
+        "records/colab-example.revises-8b4820bd.json"
+      ],
       "title": "A hosted notebook's record of itself",
       "extensions": {
         "role": "notebook"
@@ -23,6 +25,15 @@
       "signed": "records/marimo-example.signed.json",
       "attestations": [],
       "title": "A local Marimo app's record of its own source",
+      "extensions": {
+        "role": "notebook"
+      }
+    },
+    {
+      "name": "colab-example-rerun",
+      "signed": "records/colab-example-rerun.signed.json",
+      "attestations": [],
+      "title": "A hosted notebook's record of itself, rerun",
       "extensions": {
         "role": "notebook"
       }

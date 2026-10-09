@@ -1,0 +1,29 @@
+{
+  "node": {
+    "metadata": {
+      "schemaVersion": "0.1.0",
+      "packageId": "c072ee62-56cc-4b8a-bd2c-b42aa0c3115e",
+      "createdAt": "2026-10-09T22:51:03.201Z",
+      "signingKeyId": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+    },
+    "type": "attestation/revises/v1",
+    "signer": {
+      "bindingTier": "pseudonymous",
+      "displayName": "typedstandards-publish-example",
+      "identifier": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+    },
+    "targetNodeId": "64a4cc79b488deed2b0cb07250e2e1da2cb21b7919b09850f660a82c2fff8de8",
+    "contentCanonicalization": "https://typedstandards.org/canonicalization/legacy-json/v1",
+    "successorNodeId": "1bc68112c6670d59f5135fd8302a59ffe2ff40fdcf4b2d06ea3d6a5e9e92b4df",
+    "contentHash": {
+      "sha256": "6dc61884ec28abad981741652e59e2279506b1f90b2b1f6080ebb61929e901bd"
+    }
+  },
+  "nodeId": "8b4820bd338a8b0d332e82ebaf9fb731770592825d057beae13349978e889218",
+  "signature": {
+    "signature": "YwL+gAB2WIpYItA06YDuBPJjD7UxH3KchlRtYd35PkpdyP13d/Q1RU/K9ptAUMGb8KLBDXXo9Dx7Qn4ZLTX2Aw==",
+    "publicKey": "MCowBQYDK2VwAyEARj4OGjTHMNQRCSRhuc8aQ0yveFtBf2RXaDW8ZOnlaz4=",
+    "algorithm": "Ed25519ph",
+    "kid": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+  }
+}
