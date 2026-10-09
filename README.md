@@ -176,11 +176,13 @@ os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_
   is done, delete both secrets from the panel. The seed stays in 1Password.
 
 Locally, the Marimo app gets both values from `op run`. Its env file maps each variable to a
-1Password reference, and no value is in the file:
+1Password reference, and no value is in the file. Each mapping is one unquoted line; a
+quoted reference reaches the process with its quotes, and `publish` refuses a token that holds
+a quote:
 
 ```sh
-TYPEDSTANDARDS_SIGNING_SEED_B64="op://<vault>/<item>/<field>"
-TYPEDSTANDARDS_GITHUB_TOKEN="op://<vault>/<item>/<field>"
+TYPEDSTANDARDS_SIGNING_SEED_B64=op://<vault>/<item>/<field>
+TYPEDSTANDARDS_GITHUB_TOKEN=op://<vault>/<item>/<field>
 ```
 
 ## Running each step
