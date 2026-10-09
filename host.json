@@ -13,7 +13,8 @@
       "name": "colab-example",
       "signed": "records/colab-example.signed.json",
       "attestations": [
-        "records/colab-example.revises-8b4820bd.json"
+        "records/colab-example.revises-8b4820bd.json",
+        "records/colab-example.withdraws-965ae3ad.json"
       ],
       "title": "A hosted notebook's record of itself",
       "extensions": {

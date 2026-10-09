@@ -1,0 +1,30 @@
+{
+  "node": {
+    "metadata": {
+      "schemaVersion": "0.1.0",
+      "packageId": "2b195ab6-9fbe-4829-94d0-21c05481ab3d",
+      "createdAt": "2026-10-09T22:51:08.406Z",
+      "signingKeyId": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+    },
+    "type": "attestation/withdraws/v1",
+    "signer": {
+      "bindingTier": "pseudonymous",
+      "displayName": "typedstandards-publish-example",
+      "identifier": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+    },
+    "targetNodeId": "64a4cc79b488deed2b0cb07250e2e1da2cb21b7919b09850f660a82c2fff8de8",
+    "contentCanonicalization": "https://typedstandards.org/canonicalization/legacy-json/v1",
+    "reason": "Replaced by a rerun of the same notebook, published as colab-example-rerun.",
+    "effectiveAt": "2026-10-09T22:51:08.406Z",
+    "contentHash": {
+      "sha256": "85d40b54da99eaf914bf342c9ed3072f7c998b9d26457b48838b2bceeecac19a"
+    }
+  },
+  "nodeId": "965ae3aded6d6555e25a439a53fffc13dc75b4e74d0632631cf3795156007dff",
+  "signature": {
+    "signature": "xfMHHwgDEN50ZOfa+1767zqzAMO62jtbm6i102CdDXbQaa08ADx1HVFsRQyJS1ruScZtlRx/W/4HaRdj7rGaDQ==",
+    "publicKey": "MCowBQYDK2VwAyEARj4OGjTHMNQRCSRhuc8aQ0yveFtBf2RXaDW8ZOnlaz4=",
+    "algorithm": "Ed25519ph",
+    "kid": "did:key:z6MkjBTTzQQdfWE3oMuEMW9UgE6FUqb2h3rLcLn1bY1gytmj"
+  }
+}
