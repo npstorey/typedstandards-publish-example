@@ -8,5 +8,15 @@
   "index": {
     "$comment": "The records this example host serves, each published from a hosted notebook or a local Marimo app with the typedstandards Python package."
   },
-  "records": []
+  "records": [
+    {
+      "name": "colab-example",
+      "signed": "records/colab-example.signed.json",
+      "attestations": [],
+      "title": "A hosted notebook's record of itself",
+      "extensions": {
+        "role": "notebook"
+      }
+    }
+  ]
 }
