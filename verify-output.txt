@@ -1,0 +1,7 @@
+typedstandards-host verify: records.json lists 1 record, each verified offline by @typedstandards/verify-core with the network blocked
+ok: the envelope hash and signature verify, no check reads alarm, the carried attestations give the status the index states, and the view matches its package and the served registry
+  ok    active     first-note
+records: 1 listed, 1 ok, 0 failed; active 1, withdrawn 0, superseded 0
+registry: .well-known/typed-publisher.json validates, and each record's key reads active in it (#5)
+network: global fetch calls 0; injected fetch calls 0
+result: all checks passed

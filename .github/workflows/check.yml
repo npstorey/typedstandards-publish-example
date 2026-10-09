@@ -1,0 +1,41 @@
+# Branch mode. It runs unless the repository variable TYPEDSTANDARDS_HOST_MODE is publish;
+# publish.yml runs only when it is (the README's "Publishing from a notebook").
+# On every push and pull request, on Node 24:
+#   - npm ci installs the exact versions package-lock.json pins;
+#   - typedstandards-host check rebuilds docs/ in memory from host.json and records/, and
+#     compares it with the committed docs/ byte for byte;
+#   - typedstandards-host verify verifies every served record offline, and prints exactly
+#     verify-output.txt;
+#   - display.mjs reads every record through host-policy.json, and none is refused.
+# The job signs nothing: it holds no key and reads no repository secret.
+# Each action is pinned to a full commit SHA, measured with git ls-remote, with its tag in a comment.
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: vars.TYPEDSTANDARDS_HOST_MODE != 'publish'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          # The major version only: the first line of verify-output.txt names no Node
+          # version and no core version, so the output stays equal across Node 24 patches.
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci
+      - run: npx typedstandards-host check
+      - name: npx typedstandards-host verify, compared with verify-output.txt
+        run: |
+          npx typedstandards-host verify > "$RUNNER_TEMP/verify-output.txt"
+          diff verify-output.txt "$RUNNER_TEMP/verify-output.txt"
+      - run: node display.mjs

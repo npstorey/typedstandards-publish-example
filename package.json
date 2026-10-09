@@ -1,0 +1,23 @@
+{
+  "name": "typedstandards-host-template",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Serve signed Typed Standards records from GitHub Pages with @typedstandards/host-core.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "typedstandards-host build",
+    "check": "typedstandards-host check",
+    "verify": "typedstandards-host verify",
+    "links": "typedstandards-host links",
+    "display": "node display.mjs"
+  },
+  "dependencies": {
+    "@typedstandards/host-core": "0.1.1"
+  },
+  "devDependencies": {
+    "@typedstandards/cli": "0.2.0"
+  }
+}
