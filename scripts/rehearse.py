@@ -11,7 +11,8 @@ What it does, in a scratch directory it makes (nothing in this repository change
   2. Makes a throwaway signing seed and a stand-in token in this process. Neither is printed,
      written to a file or kept: the seed reaches the CLI only through the environment of the
      calls that sign, as the README's own setup gives it. The scratch copy's host-policy.json
-     names the throwaway key as its signer; nothing else in the copy changes.
+     names the throwaway key as its signer, and the copy starts as the setup commit left it:
+     "records": [] in host.json, and no records/. Nothing else in the copy changes.
   3. Serves the scratch copy as a GitHub repository through httpx.MockTransport: the reads and
      the Git Data API writes publish makes. Every httpx client the process builds is routed to
      it, so no request leaves the machine.
@@ -393,6 +394,17 @@ def main() -> int:
     policy["signer"] = throwaway
     policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     say(f"host-policy.json signer: {kept_key} -> {throwaway} (a throwaway key, made in this process)")
+    # The rehearsal starts from the setup commit's state: no records. Records this repository
+    # has published since are left out of the scratch copy; the repository keeps them.
+    manifest_path = site / "host.json"
+    manifest = json.loads(manifest_path.read_text("utf-8"))
+    if manifest["records"] or (site / "records").exists():
+        listed = [e["name"] for e in manifest["records"]]
+        manifest["records"] = []
+        manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        shutil.rmtree(site / "records", ignore_errors=True)
+        say(f"host.json: the scratch copy starts with no records (this repository lists {listed or 'none'}), "
+            "and without records/")
 
     files = {
         p.relative_to(site).as_posix(): p.read_bytes()
