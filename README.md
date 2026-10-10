@@ -267,6 +267,8 @@ fnm exec --using=24 -- uv run --no-project --with typedstandards==0.2.0 --with m
 The rehearsal runs the four publishes in the order above, offline, in a scratch copy of the
 committed tree:
 
+- The scratch copy starts as the setup commit left it, with `"records": []` and no
+  `records/`; this repository's published records stay where they are.
 - It uses a throwaway seed made in its own process, and the scratch copy's policy names that
   key.
 - A fake GitHub API answers the reads and Git Data API writes that `publish` makes.
