@@ -148,12 +148,17 @@ written as a literal in a cell.
 
 The notebook reads both values from Colab's Secrets panel (the key icon in the left bar), in
 one cell that prints nothing. That cell runs after the analysis and just before the signing
-cell:
+cell. It sets nothing unless both reads succeed, and no failure in it shows either value:
 
 ```python
-os.environ["TYPEDSTANDARDS_SIGNING_SEED_B64"] = userdata.get("TYPEDSTANDARDS_SIGNING_SEED_B64")
-os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_TOKEN")
+NAMES = ("TYPEDSTANDARDS_SIGNING_SEED_B64", "TYPEDSTANDARDS_GITHUB_TOKEN")
+for name in NAMES:
+    os.environ.pop(name, None)
+os.environ.update(zip(NAMES, [userdata.get(name) for name in NAMES]))
 ```
+
+The records published before this form of the cell keep the earlier cell's source, which names
+the two variables and holds neither value.
 
 - **What colabtools' source establishes.** In
   [`userdata.py`](https://github.com/googlecolab/colabtools/blob/f4b1d17310779e2f312fd7c06e5084ec80deb9f1/google/colab/userdata.py),
@@ -165,11 +170,12 @@ os.environ["TYPEDSTANDARDS_GITHUB_TOKEN"] = userdata.get("TYPEDSTANDARDS_GITHUB_
   fetched when running from the Colab UI"). So the kernel gets a value only by asking the
   frontend while the notebook runs, and only for a notebook with access.
 - **What this repository shows.** The notebook writes neither value into any cell. The
-  secrets cell assigns both to `os.environ` and prints nothing, and no other cell's code reads
-  them back; the CLI reads the seed, and `publish` the token, from the environment. The
-  signed notebook is rebuilt with every cell's metadata and the notebook's Colab metadata
-  dropped. `scripts/scan_outputs.py` checks every output cell of the committed notebook and of
-  each signed notebook for both variables' names and the token's prefix.
+  secrets cell reads both, sets both in `os.environ` only once both reads have succeeded, and
+  prints nothing. No other cell's code reads them back; the CLI reads the seed, and `publish`
+  the token, from the environment. The signed notebook is rebuilt with every cell's metadata
+  and the notebook's Colab metadata dropped. `scripts/scan_outputs.py` checks every output
+  cell of the committed notebook and of each signed notebook for both variables' names and
+  the token's prefix.
 - **Not measured here.** What Colab itself saves into its own copy of the notebook, in Drive.
 - **What the source does not establish.** Where Google stores the value, and for how long.
 - **The panel.** Observed on 2026-10-09: two secrets added in one notebook's Secrets panel,
